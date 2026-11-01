@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6" x-data="containerStats('{{ container_id }}')">
+    <div class="flex justify-between items-center">
+        <h2 class="text-xl font-bold">Chi tiết Container: <span class="text-blue-600">{{ container_id }}</span></h2>
+        <a href="/" class="bg-gray-200 px-4 py-2 rounded text-sm hover:bg-gray-300">Quay lại</a>
+    </div>
+
+    <!-- Live Charts Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- CPU Chart -->
+        <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="font-semibold mb-2">CPU Usage (%)</h3>
+            <div class="text-2xl font-bold text-blue-500 mb-2" x-text="cpuPercent + '%'">0%</div>
+            <div style="height: 200px;">
+                <canvas id="cpuChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Memory Chart -->
+        <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="font-semibold mb-2">Memory Usage (MB)</h3>
+            <div class="text-2xl font-bold text-green-500 mb-2" x-text="memUsage + ' MB'">0 MB</div>
+            <div style="height: 200px;">
+                <canvas id="memChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+function containerStats(containerId) {
+    return {
+        cpuPercent: 0,
+        memUsage: 0,
+        cpuChart: null,
+        memChart: null,
+        init() {
+            // Khởi tạo biểu đồ Chart.js
+            const ctxCpu = document.getElementById('cpuChart').getContext('2d');
+            const ctxMem = document.getElementById('memChart').getContext('2d');
+
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { display: false },
+                    y: { beginAtZero: true, suggestedMax: 100 }
+                },
+                animation: false
+            };
+
+            this.cpuChart = new Chart(ctxCpu, {
+                type: 'line',
+                data: { labels: Array(20).fill(''), datasets: [{ data: Array(20).fill(0), borderColor: '#3b82f6', tension: 0.2 }] },
+                options: commonOptions
+            });
+
+            this.memChart = new Chart(ctxMem, {
+                type: 'line',
+                data: { labels: Array(20).fill(''), datasets: [{ data: Array(20).fill(0), borderColor: '#10b981', tension: 0.2 }] },
+                options: commonOptions
+            });
+
+            // Kết nối WebSocket
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const ws = new WebSocket(`${protocol}//${window.location.host}/ws/containers/${containerId}/stats`);
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.error) return;
+
+                this.cpuPercent = data.cpu_percent;
+                this.memUsage = data.memory_usage_mb;
+
+                // Cập nhật dữ liệu vào biểu đồ
+                this.updateChart(this.cpuChart, data.cpu_percent);
+                this.updateChart(this.memChart, data.memory_usage_mb);
+            };
+        },
+        updateChart(chart, value) {
+            chart.data.datasets[0].data.shift();
+            chart.data.datasets[0].data.push(value);
+            chart.update();
+        }
+    }
+}
+</script>
+{% endblock %}
