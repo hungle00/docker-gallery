@@ -1,0 +1,32 @@
+<div id="image-table-wrapper" class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size (MB)</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                {% for img in images %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap font-mono text-gray-500">{{ img.id }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-800">
+                        {{ img.tags | join(', ') }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ img.size }} MB</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                        <button hx-delete="/api/images/{{ img.id }}" hx-target="#image-table-wrapper" hx-swap="outerHTML" hx-confirm="Bạn có chắc muốn xóa image này không?" class="bg-red-500 text-white px-3 py-1 rounded text-xs font-medium hover:bg-red-600 transition">Remove</button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="px-6 py-8 text-center text-gray-500">Không tìm thấy image nào.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

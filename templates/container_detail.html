@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="space-y-6" x-data="containerStats('{{ container_id }}')">
+<div class="space-y-6" data-container-id="{{ container_id }}" x-data="containerStats($el.dataset.containerId)">
     <div class="flex justify-between items-center">
         <h2 class="text-xl font-bold">Chi tiết Container: <span class="text-blue-600">{{ container_id }}</span></h2>
         <a href="/" class="bg-gray-200 px-4 py-2 rounded text-sm hover:bg-gray-300">Quay lại</a>
@@ -39,7 +39,7 @@ function containerStats(containerId) {
         cpuChart: null,
         memChart: null,
         init() {
-            // Khởi tạo biểu đồ Chart.js
+            // Initialize the Chart.js charts
             const ctxCpu = document.getElementById('cpuChart').getContext('2d');
             const ctxMem = document.getElementById('memChart').getContext('2d');
 
@@ -65,9 +65,9 @@ function containerStats(containerId) {
                 options: commonOptions
             });
 
-            // Kết nối WebSocket
+            // Connect to the WebSocket
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const ws = new WebSocket(`${protocol}//${window.location.host}/ws/containers/${containerId}/stats`);
+            const ws = new WebSocket(`${protocol}//${window.location.host}/ws/containers/${encodeURIComponent(containerId)}/stats`);
 
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
@@ -76,7 +76,7 @@ function containerStats(containerId) {
                 this.cpuPercent = data.cpu_percent;
                 this.memUsage = data.memory_usage_mb;
 
-                // Cập nhật dữ liệu vào biểu đồ
+                // Update the chart data
                 this.updateChart(this.cpuChart, data.cpu_percent);
                 this.updateChart(this.memChart, data.memory_usage_mb);
             };

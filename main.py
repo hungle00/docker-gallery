@@ -1,9 +1,8 @@
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from routers import containers, images, networks, stats
+from routers import containers, images, networks, stats, volumes
 from services.docker_client import client
 
 app = FastAPI(title="Lightweight Docker Dashboard", version="1.0")
@@ -17,6 +16,7 @@ app.include_router(containers.router)
 app.include_router(images.router)
 app.include_router(networks.router)
 app.include_router(stats.router)
+app.include_router(volumes.router)
 
 # Page Routes
 @app.get("/")
@@ -25,7 +25,7 @@ def home(request: Request):
 
 @app.get("/partials/containers-table")
 def containers_table_partial(request: Request):
-    """Render HTML fragment cho bảng container (dùng cho HTMX)"""
+    """Render the container table HTML fragment for HTMX."""
     try:
         docker_containers = client.containers.list(all=True)
         container_list = [
@@ -56,4 +56,4 @@ def container_detail_page(request: Request, container_id: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

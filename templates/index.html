@@ -12,7 +12,7 @@
         </button>
     </div>
 
-    <!-- Khu vực load bảng container tự động bằng HTMX (polling mỗi 5 giây) -->
+    <!-- Automatically load the container table with HTMX (poll every 5 seconds) -->
     <div hx-get="/partials/containers-table" hx-trigger="load, every 5s" hx-swap="outerHTML">
         <div id="container-table-wrapper" class="bg-white p-8 rounded-lg shadow text-center text-gray-500">
             Đang tải danh sách container...
