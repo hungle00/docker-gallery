@@ -18,7 +18,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ img.size }} MB</td>
                     <td class="px-6 py-4 whitespace-nowrap text-center">
-                        <button hx-delete="/api/images/{{ img.id }}" hx-target="#image-table-wrapper" hx-swap="outerHTML" hx-confirm="Bạn có chắc muốn xóa image này không?" class="bg-red-500 text-white px-3 py-1 rounded text-xs font-medium hover:bg-red-600 transition">Remove</button>
+                        <button hx-delete="/ui/images/{{ img.id }}" hx-target="#image-table-wrapper" hx-swap="outerHTML" hx-confirm="Bạn có chắc muốn xóa image này không?" class="bg-red-500 text-white px-3 py-1 rounded text-xs font-medium hover:bg-red-600 transition">Remove</button>
                     </td>
                 </tr>
                 {% else %}

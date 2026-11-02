@@ -10,7 +10,8 @@ def images_page(request: Request):
     from main import templates
     return templates.TemplateResponse(request, "images.html")
 
-@router.get("/api/images/table")
+@router.get("/api/images/table", include_in_schema=False)
+@router.get("/partials/images-table")
 def images_table(request: Request):
     from main import templates
     try:
@@ -24,18 +25,36 @@ def images_table(request: Request):
             }
             for img in images
         ]
-    except Exception:
-        image_list = []
+    except docker.errors.DockerException as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
     return templates.TemplateResponse(
         request,
         "partials/image_table.html",
         {"images": image_list}
     )
 
-@router.delete("/api/images/{image_id}")
-def remove_image(image_id: str):
+def _remove_image(image_id: str) -> None:
     try:
         client.images.remove(image_id, force=True)
-        return {"status": "success"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except docker.errors.ImageNotFound as e:
+        raise HTTPException(status_code=404, detail="Image không tồn tại") from e
+    except docker.errors.DockerException as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+@router.delete("/api/images/{image_id}")
+def remove_image(image_id: str):
+    _remove_image(image_id)
+    return {"status": "success"}
+
+@router.delete("/ui/images/{image_id}", response_class=HTMLResponse)
+def remove_image_for_ui(request: Request, image_id: str):
+    _remove_image(image_id)
+    return images_table(request)
+
+@router.post("/ui/images/pull", response_class=HTMLResponse)
+def pull_image_for_ui(request: Request, image_name: str = Form(...)):
+    try:
+        client.images.pull(image_name)
+    except docker.errors.DockerException as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+    return images_table(request)

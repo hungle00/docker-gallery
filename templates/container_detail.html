@@ -33,11 +33,18 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 function containerStats(containerId) {
+    let cpuChart;
+    let memChart;
+
+    function updateChart(chart, value) {
+        chart.data.datasets[0].data.shift();
+        chart.data.datasets[0].data.push(value);
+        chart.update();
+    }
+
     return {
         cpuPercent: 0,
         memUsage: 0,
-        cpuChart: null,
-        memChart: null,
         init() {
             // Initialize the Chart.js charts
             const ctxCpu = document.getElementById('cpuChart').getContext('2d');
@@ -53,13 +60,13 @@ function containerStats(containerId) {
                 animation: false
             };
 
-            this.cpuChart = new Chart(ctxCpu, {
+            cpuChart = new Chart(ctxCpu, {
                 type: 'line',
                 data: { labels: Array(20).fill(''), datasets: [{ data: Array(20).fill(0), borderColor: '#3b82f6', tension: 0.2 }] },
                 options: commonOptions
             });
 
-            this.memChart = new Chart(ctxMem, {
+            memChart = new Chart(ctxMem, {
                 type: 'line',
                 data: { labels: Array(20).fill(''), datasets: [{ data: Array(20).fill(0), borderColor: '#10b981', tension: 0.2 }] },
                 options: commonOptions
@@ -77,14 +84,9 @@ function containerStats(containerId) {
                 this.memUsage = data.memory_usage_mb;
 
                 // Update the chart data
-                this.updateChart(this.cpuChart, data.cpu_percent);
-                this.updateChart(this.memChart, data.memory_usage_mb);
+                updateChart(cpuChart, data.cpu_percent);
+                updateChart(memChart, data.memory_usage_mb);
             };
-        },
-        updateChart(chart, value) {
-            chart.data.datasets[0].data.shift();
-            chart.data.datasets[0].data.push(value);
-            chart.update();
         }
     }
 }

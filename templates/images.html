@@ -8,14 +8,14 @@
             <p class="text-sm text-gray-500 mt-0.5">Quản lý và tải các Docker image từ registry.</p>
         </div>
         <!-- Form Pull Image nhanh -->
-        <form hx-post="/api/images/pull" hx-target="#image-table-wrapper" hx-swap="outerHTML" class="flex gap-2">
+        <form hx-post="/ui/images/pull" hx-target="#image-table-wrapper" hx-swap="outerHTML" class="flex gap-2">
             <input type="text" name="image_name" placeholder="vd: redis:alpine" required class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 shadow transition">📥 Pull Image</button>
         </form>
     </div>
 
     <!-- Bảng danh sách Image -->
-    <div hx-get="/api/images/table" hx-trigger="load" hx-swap="outerHTML">
+    <div hx-get="/partials/images-table" hx-trigger="load" hx-swap="outerHTML">
         <div id="image-table-wrapper" class="bg-white p-8 rounded-lg shadow text-center text-gray-500 border border-gray-200">
             Đang tải danh sách image...
         </div>

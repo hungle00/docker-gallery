@@ -7,13 +7,13 @@
             <h2 class="text-2xl font-bold text-gray-800">Volumes</h2>
             <p class="text-sm text-gray-500 mt-0.5">Quản lý các ổ đĩa dữ liệu lưu trữ bền vững của Docker.</p>
         </div>
-        <button hx-get="/api/volumes/table" hx-target="#volume-table-wrapper" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 shadow transition flex items-center gap-2">
+        <button hx-get="/partials/volumes-table" hx-target="#volume-table-wrapper" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 shadow transition flex items-center gap-2">
             🔄 Làm mới
         </button>
     </div>
 
     <!-- Bảng danh sách Volume -->
-    <div hx-get="/api/volumes/table" hx-trigger="load" hx-swap="outerHTML">
+    <div hx-get="/partials/volumes-table" hx-trigger="load" hx-swap="outerHTML">
         <div id="volume-table-wrapper" class="bg-white p-8 rounded-lg shadow text-center text-gray-500 border border-gray-200">
             Đang tải danh sách volume...
         </div>

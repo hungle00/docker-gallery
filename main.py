@@ -13,6 +13,7 @@ templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
 # Register Routers
 app.include_router(containers.router)
+app.include_router(containers.ui_router)
 app.include_router(images.router)
 app.include_router(networks.router)
 app.include_router(stats.router)
@@ -26,25 +27,7 @@ def home(request: Request):
 @app.get("/partials/containers-table")
 def containers_table_partial(request: Request):
     """Render the container table HTML fragment for HTMX."""
-    try:
-        docker_containers = client.containers.list(all=True)
-        container_list = [
-            {
-                "id": c.id[:12],
-                "name": c.name,
-                "status": c.status,
-                "image": c.image.tags[0] if c.image.tags else "<none>",
-            }
-            for c in docker_containers
-        ]
-    except Exception:
-        container_list = []
-        
-    return templates.TemplateResponse(
-        request,
-        "partials/container_table.html",
-        {"containers": container_list},
-    )
+    return containers.render_container_table(request)
 
 @app.get("/containers/{container_id}/detail")
 def container_detail_page(request: Request, container_id: str):
