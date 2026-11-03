@@ -4,8 +4,140 @@
 <div class="space-y-6" data-container-id="{{ container_id }}" x-data="containerStats($el.dataset.containerId)">
     <div class="flex justify-between items-center">
         <h2 class="text-xl font-bold">Chi tiết Container: <span class="text-blue-600">{{ container_id }}</span></h2>
-        <a href="/" class="bg-gray-200 px-4 py-2 rounded text-sm hover:bg-gray-300">Quay lại</a>
+        <div class="flex gap-2">
+            <a href="/containers/{{ container_id }}/logs" class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">Xem logs</a>
+            <a href="/" class="bg-gray-200 px-4 py-2 rounded text-sm hover:bg-gray-300">Quay lại</a>
+        </div>
     </div>
+
+    <section class="bg-white p-6 rounded-lg shadow" aria-labelledby="inspect-heading">
+        <h3 id="inspect-heading" class="text-lg font-semibold mb-4">Thông tin Container</h3>
+        <p x-show="inspectLoading" class="text-sm text-gray-500" role="status">Đang tải thông tin container...</p>
+        <p x-show="inspectError" x-text="inspectError" class="text-sm text-red-600" role="alert"></p>
+
+        <div x-show="inspect" class="space-y-6">
+            <dl class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <dt class="text-sm text-gray-500">Tên</dt>
+                    <dd class="font-medium break-all" x-text="inspect?.name || '—'"></dd>
+                </div>
+                <div>
+                    <dt class="text-sm text-gray-500">ID</dt>
+                    <dd class="font-medium break-all" x-text="inspect?.id || '—'"></dd>
+                </div>
+                <div>
+                    <dt class="text-sm text-gray-500">Trạng thái</dt>
+                    <dd class="font-medium" x-text="inspect?.status || '—'"></dd>
+                </div>
+            </dl>
+
+            <div>
+                <h4 class="font-semibold mb-2">Cấu hình</h4>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <dt class="text-gray-500">Image</dt>
+                        <dd class="break-all" x-text="inspect?.config?.Image || '—'"></dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500">Working directory</dt>
+                        <dd class="break-all" x-text="inspect?.config?.WorkingDir || '—'"></dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500">User</dt>
+                        <dd class="break-all" x-text="inspect?.config?.User || '—'"></dd>
+                    </div>
+                    <div>
+                        <dt class="text-gray-500">Entrypoint</dt>
+                        <dd class="break-all" x-text="formatCommand(inspect?.config?.Entrypoint)"></dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-gray-500">Command</dt>
+                        <dd class="break-all" x-text="formatCommand(inspect?.config?.Cmd)"></dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div>
+                <h4 class="font-semibold mb-2">Ports</h4>
+                <p x-show="!Object.keys(inspect?.ports || {}).length" class="text-sm text-gray-500">Không có port được khai báo.</p>
+                <div class="overflow-x-auto">
+                    <table x-show="Object.keys(inspect?.ports || {}).length" class="w-full text-sm text-left">
+                        <thead class="text-gray-500 border-b">
+                            <tr>
+                                <th class="py-2 pr-4 font-medium">Container port</th>
+                                <th class="py-2 font-medium">Host binding</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="entry in Object.entries(inspect?.ports || {})" :key="entry[0]">
+                                <tr class="border-b last:border-0">
+                                    <td class="py-2 pr-4" x-text="entry[0]"></td>
+                                    <td class="py-2">
+                                        <template x-if="entry[1]?.length">
+                                            <span x-text="entry[1].map(binding => `${binding.HostIp || '0.0.0.0'}:${binding.HostPort}`).join(', ')"></span>
+                                        </template>
+                                        <span x-show="!entry[1]?.length" class="text-gray-500">Chưa publish ra host</span>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="font-semibold mb-2">Mounts</h4>
+                <p x-show="!inspect?.mounts?.length" class="text-sm text-gray-500">Không có mount nào.</p>
+                <div class="overflow-x-auto">
+                    <table x-show="inspect?.mounts?.length" class="w-full text-sm text-left">
+                        <thead class="text-gray-500 border-b">
+                            <tr>
+                                <th class="py-2 pr-4 font-medium">Type</th>
+                                <th class="py-2 pr-4 font-medium">Source</th>
+                                <th class="py-2 pr-4 font-medium">Destination</th>
+                                <th class="py-2 font-medium">Mode</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="(mount, index) in (inspect?.mounts || [])" :key="`${mount.Destination}-${index}`">
+                                <tr class="border-b last:border-0">
+                                    <td class="py-2 pr-4" x-text="mount.Type || '—'"></td>
+                                    <td class="py-2 pr-4 break-all" x-text="mount.Source || '—'"></td>
+                                    <td class="py-2 pr-4 break-all" x-text="mount.Destination || '—'"></td>
+                                    <td class="py-2" x-text="mount.Mode || (mount.RW ? 'rw' : 'ro')"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="font-semibold mb-2">Networks</h4>
+                <p x-show="!Object.keys(inspect?.networks || {}).length" class="text-sm text-gray-500">Không có network nào.</p>
+                <div class="overflow-x-auto">
+                    <table x-show="Object.keys(inspect?.networks || {}).length" class="w-full text-sm text-left">
+                        <thead class="text-gray-500 border-b">
+                            <tr>
+                                <th class="py-2 pr-4 font-medium">Network</th>
+                                <th class="py-2 pr-4 font-medium">IP address</th>
+                                <th class="py-2 font-medium">Gateway</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="entry in Object.entries(inspect?.networks || {})" :key="entry[0]">
+                                <tr class="border-b last:border-0">
+                                    <td class="py-2 pr-4 break-all" x-text="entry[0]"></td>
+                                    <td class="py-2 pr-4" x-text="entry[1]?.IPAddress || '—'"></td>
+                                    <td class="py-2" x-text="entry[1]?.Gateway || '—'"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Live Charts Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -45,7 +177,30 @@ function containerStats(containerId) {
     return {
         cpuPercent: 0,
         memUsage: 0,
+        inspect: null,
+        inspectLoading: true,
+        inspectError: '',
+        async loadInspect() {
+            try {
+                const response = await fetch(`/api/containers/${encodeURIComponent(containerId)}`);
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.detail || `Không thể tải thông tin container (${response.status})`);
+                }
+                this.inspect = data;
+            } catch (error) {
+                this.inspectError = error.message || 'Không thể tải thông tin container.';
+            } finally {
+                this.inspectLoading = false;
+            }
+        },
+        formatCommand(value) {
+            if (Array.isArray(value)) return value.join(' ') || '—';
+            return value || '—';
+        },
         init() {
+            this.loadInspect();
+
             // Initialize the Chart.js charts
             const ctxCpu = document.getElementById('cpuChart').getContext('2d');
             const ctxMem = document.getElementById('memChart').getContext('2d');

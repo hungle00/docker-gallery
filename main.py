@@ -37,6 +37,14 @@ def container_detail_page(request: Request, container_id: str):
         {"container_id": container_id},
     )
 
+@app.get("/containers/{container_id}/logs")
+def container_logs_page(request: Request, container_id: str):
+    return templates.TemplateResponse(
+        request,
+        "container_logs.html",
+        {"container_id": container_id},
+    )
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

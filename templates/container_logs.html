@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Container Logs{% endblock %}
+
+{% block content %}
+<div
+    class="space-y-6"
+    data-container-id="{{ container_id }}"
+    x-data="containerLogs($el.dataset.containerId)"
+>
+    <div class="flex flex-wrap justify-between items-center gap-3">
+        <div>
+            <h2 class="text-xl font-bold">Logs Container: <span class="text-blue-600">{{ container_id }}</span></h2>
+            <p class="text-sm text-gray-600 mt-1">
+                Kết nối:
+                <span
+                    class="font-medium"
+                    :class="connectionStatus === 'Đang kết nối' ? 'text-yellow-600' : (connectionStatus === 'Đã kết nối' ? 'text-green-600' : 'text-gray-500')"
+                    x-text="connectionStatus"
+                    role="status"
+                ></span>
+            </p>
+        </div>
+        <div class="flex gap-2">
+            <button
+                type="button"
+                @click="connectLogs()"
+                class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700"
+            >Kết nối lại</button>
+            <button
+                type="button"
+                @click="clearLogs()"
+                class="bg-gray-200 px-4 py-2 rounded text-sm hover:bg-gray-300"
+            >Xóa logs</button>
+            <a
+                href="/containers/{{ container_id }}/detail"
+                class="bg-gray-200 px-4 py-2 rounded text-sm hover:bg-gray-300"
+            >Chi tiết</a>
+        </div>
+    </div>
+
+    <p x-show="connectionError" x-text="connectionError" class="text-sm text-red-600" role="alert"></p>
+
+    <section class="bg-gray-950 rounded-lg shadow overflow-hidden" aria-label="Container logs">
+        <pre
+            x-ref="output"
+            x-text="displayLogs"
+            class="h-[65vh] overflow-auto p-4 text-sm text-green-100 font-mono whitespace-pre-wrap break-words"
+            aria-live="polite"
+            aria-relevant="additions text"
+        ></pre>
+    </section>
+    <p class="text-xs text-gray-500">Hiển thị tối đa 500 dòng gần nhất. Mở trang sẽ tải 100 dòng cuối và tiếp tục nhận logs mới.</p>
+</div>
+
+<script>
+function containerLogs(containerId) {
+    return {
+        connectionStatus: 'Đang kết nối',
+        connectionError: '',
+        lines: [],
+        pendingText: '',
+        socket: null,
+        get displayLogs() {
+            return [...this.lines, this.pendingText].filter((line, index, entries) => (
+                line !== '' || index < entries.length - 1
+            )).join('\n');
+        },
+        init() {
+            this.connectLogs();
+        },
+        connectLogs() {
+            if (this.socket) {
+                this.socket.onclose = null;
+                this.socket.close();
+            }
+
+            this.connectionStatus = 'Đang kết nối';
+            this.connectionError = '';
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const socket = new WebSocket(
+                `${protocol}//${window.location.host}/api/containers/${encodeURIComponent(containerId)}/logs`
+            );
+            this.socket = socket;
+
+            socket.onopen = () => {
+                if (this.socket === socket) this.connectionStatus = 'Đã kết nối';
+            };
+            socket.onmessage = (event) => {
+                if (this.socket !== socket) return;
+                const parts = (this.pendingText + event.data).split(/\r?\n/);
+                this.pendingText = parts.pop() || '';
+                this.lines.push(...parts);
+                if (this.lines.length > 500) this.lines.splice(0, this.lines.length - 500);
+                this.$nextTick(() => {
+                    const output = this.$refs.output;
+                    output.scrollTop = output.scrollHeight;
+                });
+            };
+            socket.onerror = () => {
+                if (this.socket === socket) {
+                    this.connectionError = 'Không thể kết nối tới luồng logs.';
+                }
+            };
+            socket.onclose = () => {
+                if (this.socket === socket) this.connectionStatus = 'Đã ngắt kết nối';
+            };
+        },
+        clearLogs() {
+            this.lines = [];
+            this.pendingText = '';
+        },
+        destroy() {
+            if (this.socket) {
+                this.socket.onclose = null;
+                this.socket.close();
+                this.socket = null;
+            }
+        }
+    };
+}
+</script>
+{% endblock %}
