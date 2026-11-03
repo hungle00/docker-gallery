@@ -9,7 +9,6 @@ Designed for simplicity, this project requires no complex Node.js frontend toolc
 
 - Frontend: Tailwind CSS (CDN), HTMX, Alpine.js, Chart.js
 
----
 
 ## Key Features
 
@@ -21,3 +20,26 @@ Designed for simplicity, this project requires no complex Node.js frontend toolc
 - **Modern UI:** Inspired by Docker Desktop, featuring a sleek Tailwind CSS layout combined with HTMX for fast, seamless page updates without full reloads.
 
 ---
+
+## Build and Run with Docker
+
+The app connects to the Docker daemon through its Unix socket. On Linux, build and run it from the project root:
+
+```bash
+docker build -t docker-gallery .
+docker run --rm -p 8000:8000 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  docker-gallery
+```
+
+Open [http://localhost:8000](http://localhost:8000). Press `Ctrl+C` to stop the container.
+
+For Docker Desktop with WSL integration, if the active Docker context uses `/mnt/wsl/shared-docker/docker.sock`, mount that socket instead:
+
+```bash
+docker run --rm -p 8000:8000 \
+  -v /mnt/wsl/shared-docker/docker.sock:/var/run/docker.sock \
+  docker-gallery
+```
+
+Mounting the Docker socket gives the app control over the host Docker daemon, effectively granting root-level access to the host. Only run this dashboard in a trusted environment. If your Docker context uses another Unix socket, mount that socket at `/var/run/docker.sock` inside the container.
