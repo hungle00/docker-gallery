@@ -64,6 +64,12 @@ def _remove_container(container_id: str) -> None:
     except docker.errors.DockerException as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+def _next_log_chunk(logs_stream):
+    try:
+        return next(logs_stream)
+    except StopIteration:
+        return None
+
 def render_container_table(request: Request) -> HTMLResponse:
     from main import templates
 
@@ -110,15 +116,26 @@ def remove_container_for_ui(request: Request, container_id: str):
 @router.websocket("/{container_id}/logs")
 async def container_logs_ws(websocket: WebSocket, container_id: str):
     await websocket.accept()
+    logs_stream = None
     try:
-        container = client.containers.get(container_id)
-        logs_stream = container.logs(stream=True, follow=True, tail=100)
-        for chunk in logs_stream:
+        container = await asyncio.to_thread(client.containers.get, container_id)
+        logs_stream = await asyncio.to_thread(
+            container.logs,
+            stream=True,
+            follow=True,
+            tail=100,
+        )
+        while True:
+            chunk = await asyncio.to_thread(_next_log_chunk, logs_stream)
+            if chunk is None:
+                break
             log_line = chunk.decode("utf-8", errors="ignore")
             await websocket.send_text(log_line)
-            await asyncio.sleep(0.01)
     except WebSocketDisconnect:
         pass
     except Exception as e:
         await websocket.send_text(f"Lỗi: {str(e)}")
         await websocket.close()
+    finally:
+        if logs_stream is not None:
+            await asyncio.to_thread(logs_stream.close)

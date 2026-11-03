@@ -6,14 +6,28 @@ from services.docker_client import client
 
 router = APIRouter(prefix="/ws", tags=["Stats"])
 
+def _next_stats(stats_generator):
+    try:
+        return next(stats_generator)
+    except StopIteration:
+        return None
+
 @router.websocket("/containers/{container_id}/stats")
 async def container_stats_ws(websocket: WebSocket, container_id: str):
     await websocket.accept()
+    stats_generator = None
     try:
-        container = client.containers.get(container_id)
-        stats_generator = container.stats(stream=True, decode=True)
+        container = await asyncio.to_thread(client.containers.get, container_id)
+        stats_generator = await asyncio.to_thread(
+            container.stats,
+            stream=True,
+            decode=True,
+        )
         
-        for stats in stats_generator:
+        while True:
+            stats = await asyncio.to_thread(_next_stats, stats_generator)
+            if stats is None:
+                break
             cpu_percent = 0.0
             cpu_stats = stats.get("cpu_stats", {})
             precpu_stats = stats.get("precpu_stats", {})
@@ -48,3 +62,6 @@ async def container_stats_ws(websocket: WebSocket, container_id: str):
     except Exception as e:
         await websocket.send_text(json.dumps({"error": str(e)}))
         await websocket.close()
+    finally:
+        if stats_generator is not None:
+            await asyncio.to_thread(stats_generator.close)
