@@ -2,7 +2,7 @@
 
 A lightweight, modern, and self-hosted Docker management dashboard built with **FastAPI**, **HTMX**, **Alpine.js**, and **Tailwind CSS**.
 
-Designed for simplicity, this project requires no complex Node.js frontend toolchain, consumes minimal system resources, and provides smooth real-time monitoring capabilities.
+![Visual Dashboard](screenshots/docker-gallery.png "docker gallery")
 
 ## Tech Stack
 - Backend: Python, FastAPI, Uvicorn, Docker Python SDK
@@ -43,3 +43,7 @@ docker run --rm -p 8000:8000 \
 ```
 
 Mounting the Docker socket gives the app control over the host Docker daemon, effectively granting root-level access to the host. Only run this dashboard in a trusted environment. If your Docker context uses another Unix socket, mount that socket at `/var/run/docker.sock` inside the container.
+
+## API Documentation
+
+Swagger at `/docs` lists the JSON API endpoints only. HTML pages, HTMX fragments/actions, and WebSocket routes are not included in the OpenAPI schema.

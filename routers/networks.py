@@ -22,5 +22,7 @@ def inspect_network(network_id: str):
     try:
         net = client.networks.get(network_id)
         return net.attrs
-    except Exception as e:
-        raise HTTPException(status_code=404, detail="Network không tồn tại")
+    except docker.errors.NotFound as e:
+        raise HTTPException(status_code=404, detail="Network không tồn tại") from e
+    except docker.errors.DockerException as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
