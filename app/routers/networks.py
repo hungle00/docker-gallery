@@ -1,6 +1,6 @@
 import docker
 from fastapi import APIRouter, HTTPException
-from services.docker_client import client
+from app.services.docker_client import client
 
 router = APIRouter(prefix="/api/networks", tags=["Networks"])
 

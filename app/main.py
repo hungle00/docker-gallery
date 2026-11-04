@@ -2,7 +2,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
-from routers import container_logs, containers, images, networks, stats, ui, volumes
+from app.routers import container_logs, containers, images, networks, stats, ui, volumes
 
 app = FastAPI(title="Lightweight Docker Dashboard", version="1.0")
 
@@ -21,4 +21,4 @@ app.include_router(stats.router, include_in_schema=False)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)

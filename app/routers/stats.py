@@ -2,7 +2,7 @@ import asyncio
 import json
 import docker
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from services.docker_client import client
+from app.services.docker_client import client
 
 router = APIRouter(prefix="/ws", tags=["Stats"])
 

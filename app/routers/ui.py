@@ -1,17 +1,17 @@
 import docker
 from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse
-from services.docker_client import client
+from app.services.docker_client import client
 
-from routers.containers import delete_container, perform_container_action
-from routers.images import delete_image
-from routers.volumes import delete_volume
+from app.routers.containers import delete_container, perform_container_action
+from app.routers.images import delete_image
+from app.routers.volumes import delete_volume
 
 router = APIRouter(tags=["UI"])
 
 
 def _templates():
-    from main import templates
+    from app.main import templates
 
     return templates
 
