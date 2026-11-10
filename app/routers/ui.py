@@ -5,6 +5,12 @@ from app.services.docker_client import client
 
 from app.routers.containers import delete_container, perform_container_action
 from app.routers.images import delete_image
+from app.routers.networks import (
+    delete_network,
+    is_builtin_network,
+    list_networks,
+    network_containers,
+)
 from app.routers.volumes import delete_volume
 
 router = APIRouter(tags=["UI"])
@@ -82,6 +88,30 @@ def render_volume_table(request: Request) -> HTMLResponse:
     )
 
 
+def render_network_table(request: Request) -> HTMLResponse:
+    try:
+        networks = list_networks()
+        network_list = [
+            {
+                "id": network.id[:12],
+                "name": network.name,
+                "driver": network.attrs.get("Driver"),
+                "scope": network.attrs.get("Scope"),
+                "containers": network_containers(network.attrs),
+                "is_builtin": is_builtin_network(network.name),
+            }
+            for network in networks
+        ]
+    except docker.errors.DockerException as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+    return _templates().TemplateResponse(
+        request,
+        "partials/network_table.html",
+        {"networks": network_list},
+    )
+
+
 @router.get("/")
 def home(request: Request):
     return _templates().TemplateResponse(request, "index.html")
@@ -97,6 +127,45 @@ def volumes_page(request: Request):
     return _templates().TemplateResponse(request, "volumes.html")
 
 
+@router.get("/networks", response_class=HTMLResponse)
+def networks_page(request: Request):
+    return _templates().TemplateResponse(request, "networks.html")
+
+
+@router.get("/networks/{network_id}", response_class=HTMLResponse)
+def network_detail_page(request: Request, network_id: str):
+    try:
+        network = client.networks.get(network_id)
+        network.reload()
+    except docker.errors.NotFound as e:
+        raise HTTPException(status_code=404, detail="Network không tồn tại") from e
+    except docker.errors.DockerException as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+    attrs = network.attrs
+    return _templates().TemplateResponse(
+        request,
+        "network_detail.html",
+        {
+            "network": {
+                "id": network.id,
+                "name": network.name,
+                "created": attrs.get("Created", ""),
+                "driver": attrs.get("Driver", ""),
+                "scope": attrs.get("Scope", ""),
+                "internal": attrs.get("Internal", False),
+                "attachable": attrs.get("Attachable", False),
+                "ingress": attrs.get("Ingress", False),
+                "enable_ipv6": attrs.get("EnableIPv6", False),
+                "ipam": attrs.get("IPAM") or {},
+                "options": attrs.get("Options") or {},
+                "labels": attrs.get("Labels") or {},
+                "containers": network_containers(attrs),
+            }
+        },
+    )
+
+
 @router.get("/partials/containers-table", response_class=HTMLResponse)
 def containers_table_partial(request: Request):
     return render_container_table(request)
@@ -110,6 +179,17 @@ def images_table_partial(request: Request):
 @router.get("/partials/volumes-table", response_class=HTMLResponse)
 def volumes_table_partial(request: Request):
     return render_volume_table(request)
+
+
+@router.get("/partials/networks-table", response_class=HTMLResponse)
+def networks_table_partial(request: Request):
+    return render_network_table(request)
+
+
+@router.delete("/ui/networks/{network_id}", response_class=HTMLResponse)
+def remove_network_for_ui(request: Request, network_id: str):
+    delete_network(network_id)
+    return render_network_table(request)
 
 
 @router.post(

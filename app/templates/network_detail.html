@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}{{ network.name }} · Network inspect{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-7xl mx-auto">
+    <div class="flex items-center justify-between">
+        <div>
+            <a href="/networks" class="text-sm text-blue-600 hover:underline">← Tất cả networks</a>
+            <h2 class="text-2xl font-bold text-gray-800 mt-2">{{ network.name }}</h2>
+            <p class="text-sm text-gray-500 mt-0.5">Inspect Docker network</p>
+        </div>
+    </div>
+
+    <section class="bg-white rounded-lg shadow border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Thông tin</h3>
+        <dl class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+            <div><dt class="text-gray-500">ID</dt><dd class="font-mono text-gray-800 break-all">{{ network.id }}</dd></div>
+            <div><dt class="text-gray-500">Created</dt><dd class="text-gray-800">{{ network.created or "—" }}</dd></div>
+            <div><dt class="text-gray-500">Driver</dt><dd class="text-gray-800">{{ network.driver or "—" }}</dd></div>
+            <div><dt class="text-gray-500">Scope</dt><dd class="text-gray-800">{{ network.scope or "—" }}</dd></div>
+            <div><dt class="text-gray-500">Internal</dt><dd class="text-gray-800">{{ "Yes" if network.internal else "No" }}</dd></div>
+            <div><dt class="text-gray-500">Attachable</dt><dd class="text-gray-800">{{ "Yes" if network.attachable else "No" }}</dd></div>
+            <div><dt class="text-gray-500">Ingress</dt><dd class="text-gray-800">{{ "Yes" if network.ingress else "No" }}</dd></div>
+            <div><dt class="text-gray-500">IPv6 enabled</dt><dd class="text-gray-800">{{ "Yes" if network.enable_ipv6 else "No" }}</dd></div>
+        </dl>
+    </section>
+
+    <section class="bg-white rounded-lg shadow border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">IPAM configuration</h3>
+        {% set ipam_config = network.ipam.get("Config") or [] %}
+        {% if ipam_config %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Subnet</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Gateway</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">IP range</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for config in ipam_config %}
+                    <tr>
+                        <td class="px-4 py-3 font-mono">{{ config.get("Subnet", "—") }}</td>
+                        <td class="px-4 py-3 font-mono">{{ config.get("Gateway", "—") }}</td>
+                        <td class="px-4 py-3 font-mono">{{ config.get("IPRange", "—") }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500">Không có cấu hình IPAM.</p>
+        {% endif %}
+        <p class="text-xs text-gray-500 mt-3">Driver: {{ network.ipam.get("Driver", "default") }}</p>
+    </section>
+
+    <section class="bg-white rounded-lg shadow border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Connected containers ({{ network.containers|length }})</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IPv4</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IPv6</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for container in network.containers %}
+                    <tr>
+                        <td class="px-4 py-3 font-semibold">
+                            <a href="/containers/{{ container.id }}/detail" class="text-blue-600 hover:underline">{{ container.name or container.id }}</a>
+                        </td>
+                        <td class="px-4 py-3 font-mono text-gray-500">{{ container.id }}</td>
+                        <td class="px-4 py-3 font-mono">{{ container.ipv4_address or "—" }}</td>
+                        <td class="px-4 py-3 font-mono">{{ container.ipv6_address or "—" }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">Không có container nào kết nối với network này.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-lg shadow border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">Options</h3>
+            {% if network.options %}
+            <pre class="text-xs bg-gray-50 rounded p-4 overflow-x-auto">{{ network.options | tojson(indent=2) }}</pre>
+            {% else %}
+            <p class="text-sm text-gray-500">Không có options.</p>
+            {% endif %}
+        </div>
+        <div class="bg-white rounded-lg shadow border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">Labels</h3>
+            {% if network.labels %}
+            <pre class="text-xs bg-gray-50 rounded p-4 overflow-x-auto">{{ network.labels | tojson(indent=2) }}</pre>
+            {% else %}
+            <p class="text-sm text-gray-500">Không có labels.</p>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}

@@ -17,6 +17,7 @@ A lightweight, modern, and self-hosted Docker management dashboard built with **
 - **Resource Observability:** Monitor real-time **CPU** and **Memory** usage percentages with live charts (powered by Chart.js & WebSockets).
 - **Images Management:** List, pull new images from registries, and remove images.
 - **Volumes Management:** List, inspect, and remove Docker volumes.
+- **Network Inspector:** List Docker networks, see connected containers and their IP addresses, and inspect network configuration.
 - **Modern UI:** Inspired by Docker Desktop, featuring a sleek Tailwind CSS layout combined with HTMX for fast, seamless page updates without full reloads.
 
 ---

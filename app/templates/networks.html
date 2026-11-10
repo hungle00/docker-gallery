@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Networks · Docker Gallery{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-7xl mx-auto">
+    <div class="flex justify-between items-center">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Networks</h2>
+            <p class="text-sm text-gray-500 mt-0.5">Danh sách Docker networks và các container đang kết nối.</p>
+        </div>
+        <button hx-get="/partials/networks-table" hx-target="#network-table-wrapper" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 shadow transition flex items-center gap-2">
+            🔄 Làm mới
+        </button>
+    </div>
+
+    <div hx-get="/partials/networks-table" hx-trigger="load" hx-swap="outerHTML">
+        <div id="network-table-wrapper" class="bg-white p-8 rounded-lg shadow text-center text-gray-500 border border-gray-200">
+            Đang tải danh sách network...
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+<div id="network-table-wrapper" class="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver / Scope</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Connected containers</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                {% for network in networks %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap font-semibold text-gray-800">{{ network.name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap font-mono text-gray-500">{{ network.id }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ network.driver }} / {{ network.scope }}</td>
+                    <td class="px-6 py-4 text-gray-600">
+                        {% if network.containers %}
+                            <ul class="space-y-1">
+                                {% for container in network.containers %}
+                                <li>
+                                    <a href="/containers/{{ container.id }}/detail" class="text-blue-600 hover:underline">{{ container.name or container.id }}</a>
+                                    {% if container.ipv4_address %}<span class="text-gray-400">({{ container.ipv4_address }})</span>{% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <span class="text-gray-400">Không có container</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center space-x-2">
+                        <a href="/networks/{{ network.id }}" class="bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-blue-700 transition">Inspect</a>
+                        {% if network.is_builtin %}
+                        <span class="text-xs text-gray-500">Built-in</span>
+                        {% else %}
+                        <button hx-delete="/ui/networks/{{ network.id }}" hx-target="#network-table-wrapper" hx-swap="outerHTML" hx-confirm="Bạn có chắc muốn xóa network này không?" class="bg-red-500 text-white px-3 py-1 rounded text-xs font-medium hover:bg-red-600 transition">Remove</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">Không tìm thấy network nào.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
